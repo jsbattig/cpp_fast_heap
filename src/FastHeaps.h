@@ -41,10 +41,11 @@ struct TBlockHeader {
 
 struct TBlock {
   TBlockHeader Header;  
-  Byte Data[INT_MAX - sizeof(PPage) - sizeof(NativeUInt) - 20];
+  Byte Data[INT_MAX - sizeof(TBlockHeader)];
 };
 
 struct TPageHeader {
+  Pointer Allocator;
   volatile long RefCount;
 };
 

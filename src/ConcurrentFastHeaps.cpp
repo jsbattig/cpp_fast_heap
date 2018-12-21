@@ -1,13 +1,13 @@
 #include "stdafx.h"
-
 #include "ConcurrentFastHeaps.h"
 #include <stdlib.h>
 
 Boolean ConcurrentDeAlloc(Pointer Ptr) {
-  Ptr = *(PPointer)((NativeUInt)Ptr - sizeof(TBlockHeader));
-  if (_InterlockedDecrement(&(*((volatile long*)Ptr))) > 0)  
+  TBlock* block = (TBlock*)((NativeUInt)Ptr - sizeof(TBlockHeader));
+  TPageHeader* page = (TPageHeader*)block->Header.PagePointer;
+  if (_InterlockedDecrement(&page->RefCount) > 0)
     return false;
-  free(Ptr);
+  free(page);  
   return true;
 }
 
@@ -22,8 +22,7 @@ Pointer ConcurentAllocBlockInPage(Pointer APage, NativeUInt AOffset) {
 
 TConcurrentFastHeap::TConcurrentFastHeap() {
   TPageMetadata page = { nullptr, 0 };
-  CurrentPage = page;
-  AllocEntryCount = 0;
+  CurrentPage = page;  
 }
 
 TConcurrentFastHeap::~TConcurrentFastHeap() {
@@ -42,19 +41,19 @@ void TConcurrentFastHeap::TryAllocNewBlockArray() {
        only object referencing the page. In that case we can simply reset the offset variable */
     TPageMetadata newPage = page;
     newPage.NextOffset = sizeof(TPageHeader);
-    CurrentPage.compare_exchange_strong(page, newPage);    
-  }
-  else {    
-    TPageMetadata newPage = page;
-    if (newPage.CurrentPagePtr != nullptr)
-      _InterlockedDecrement(&newPage.CurrentPagePtr->Header.RefCount);
+    CurrentPage.compare_exchange_weak(page, newPage);    
+  } else {    
+    TPageMetadata newPage = page;    
     Pointer ptr;
     AllocateMemory(ptr, FPageSize);
     newPage.CurrentPagePtr = (PPage)ptr;
     newPage.CurrentPagePtr->Header.RefCount = 1;
+    newPage.CurrentPagePtr->Header.Allocator = this;
     newPage.NextOffset = sizeof(TPageHeader);
-    if (!CurrentPage.compare_exchange_strong(page, newPage))
+    if (!CurrentPage.compare_exchange_weak(page, newPage))
       free(ptr);
+    if (page.CurrentPagePtr != nullptr && _InterlockedDecrement(&page.CurrentPagePtr->Header.RefCount) == 0)
+      free(page.CurrentPagePtr);
   }
 }
 
@@ -86,9 +85,7 @@ TConcurrentFixedBlockHeap::TConcurrentFixedBlockHeap(NativeUInt ABlockSize, Nati
   CurrentPage = page;
 }
 
-Pointer TConcurrentFixedBlockHeap::Alloc() {  
-  if (AllocEntryCount.fetch_add(1) == 0)
-    /* Let's free here any pointers in purgatory */;    
+Pointer TConcurrentFixedBlockHeap::Alloc() {    
   TPageMetadata page;
   do {    
     page = CurrentPage;
@@ -97,11 +94,10 @@ Pointer TConcurrentFixedBlockHeap::Alloc() {
       continue;
     }
     TPageMetadata newPage = { page.CurrentPagePtr, page.NextOffset + FBlockSize };
-    if (CurrentPage.compare_exchange_strong(page, newPage))
+    if (CurrentPage.compare_exchange_weak(page, newPage))
       break;
   } while (true);
-  Pointer Result = ConcurentAllocBlockInPage(page.CurrentPagePtr, page.NextOffset);
-  AllocEntryCount--;
+  Pointer Result = ConcurentAllocBlockInPage(page.CurrentPagePtr, page.NextOffset);  
   return Result;
 }
 

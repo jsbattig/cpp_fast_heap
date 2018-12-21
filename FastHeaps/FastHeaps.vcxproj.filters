@@ -16,8 +16,8 @@
     <Filter Include="Header Files\src">
       <UniqueIdentifier>{93022120-1835-4db5-8341-9ce02ed736db}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\src">
-      <UniqueIdentifier>{6160ef16-ada2-444d-ab4a-ba2e8998d322}</UniqueIdentifier>
+    <Filter Include="Source Files\src">
+      <UniqueIdentifier>{a93beaa3-3ab0-4050-a750-e55212a117f0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -42,10 +42,10 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\FastHeaps.cpp">
-      <Filter>Resource Files\src</Filter>
+      <Filter>Source Files\src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ConcurrentFastHeaps.cpp">
-      <Filter>Resource Files\src</Filter>
+      <Filter>Source Files\src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

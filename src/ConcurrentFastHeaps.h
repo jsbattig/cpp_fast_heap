@@ -18,16 +18,16 @@
   copies of the Software, and to permit persons to whom the Software is
   furnished to do so, subject to the following conditions :
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
 */
 
 struct TPageMetadata {  
@@ -35,11 +35,13 @@ struct TPageMetadata {
   NativeUInt NextOffset;   
 };
 
+struct TFreePage {
+  TFreePage* next;
+};
+
 class TConcurrentFastHeap {
 protected:
-  std::atomic<int> AllocEntryCount;
-  std::mutex FNextBlockMutex;
-  std::atomic<TPageMetadata> CurrentPage;  
+  std::atomic<TPageMetadata> CurrentPage;
   NativeUInt FPageSize = 0;
   NativeUInt FTotalUsableSize = 0;
   void AllocateMemory(void* &APtr, NativeUInt ASize);
@@ -48,7 +50,7 @@ protected:
 public:
   TConcurrentFastHeap();
   virtual ~TConcurrentFastHeap();
-  void DeAlloc(Pointer Ptr);
+  void DeAlloc(Pointer Ptr);  
   Integer GetCurrentBlockRefCount();
   Boolean GetIsLockFree() { return CurrentPage.is_lock_free(); }
 };
