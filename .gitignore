@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+/FastHeaps/.vs/
+/FastHeaps/Debug/
+/FastHeapsTest/Debug/
