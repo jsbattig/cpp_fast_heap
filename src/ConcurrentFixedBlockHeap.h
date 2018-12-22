@@ -35,20 +35,20 @@ namespace FastHeaps {
 
     struct TPageMetadata {
       TPage* CurrentPagePtr;
-      NativeUInt NextOffset;
+      long NextOffset;
     };
 
     class TConcurrentFixedBlockHeap {
     protected:
       long FBlockCount;
-      NativeUInt FBlockSize;
-      NativeUInt FOriginalBlockSize;
+      long FBlockSize;
+      long FOriginalBlockSize;
       std::atomic<TPageMetadata> CurrentPage;
-      NativeUInt FPageSize = 0;
-      NativeUInt FTotalUsableSize = 0;
+      long FPageSize = 0;
+      long FTotalUsableSize = 0;
       void TryAllocNewBlockArray();
     public:
-      TConcurrentFixedBlockHeap(NativeUInt ABlockSize, long ABlockCount);
+      TConcurrentFixedBlockHeap(long ABlockSize, long ABlockCount);
       ~TConcurrentFixedBlockHeap();
       Pointer Alloc();
       Integer GetCurrentBlockRefCount();
@@ -57,6 +57,5 @@ namespace FastHeaps {
     };
 
     Boolean ConcurrentDeAlloc(Pointer Ptr);
-
   }
 }

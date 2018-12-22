@@ -55,7 +55,7 @@ namespace FastHeaps {
 
     /* TConcurrentFixedBlockHeap */
 
-    TConcurrentFixedBlockHeap::TConcurrentFixedBlockHeap(NativeUInt ABlockSize, long ABlockCount) {
+    TConcurrentFixedBlockHeap::TConcurrentFixedBlockHeap(long ABlockSize, long ABlockCount) {
       FOriginalBlockSize = ABlockSize;
       FBlockCount = ABlockCount;
       FBlockSize = (ABlockSize + sizeof(TBlockHeader) + Aligner) & (~Aligner);
