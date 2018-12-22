@@ -24,39 +24,39 @@
   SOFTWARE.
 */
 
+#include "PasTypes.h"
 #include <limits.h>
 #include "FastHeapTypes.h"
+#include <mutex>
+#include <atomic>
 
-class TFastHeap {
-protected:
-  Pointer FStartBlockArray;
-  NativeUInt FNextOffset;
-  NativeUInt FPageSize;
-  NativeUInt FTotalUsableSize;
-  void AllocateMemory(void* &APtr, NativeUInt ASize);
-  void AllocNewBlockArray();
-  void DeallocateMemory(void* APtr);
-public:
-  virtual ~TFastHeap();
-  void DeAlloc(Pointer Ptr);
-  Integer GetCurrentBlockRefCount();
-};
+namespace FastHeaps {
+  namespace ConcurrentFastHeap {
 
-class TFixedBlockHeap : TFastHeap {
-protected:
-  NativeUInt FBlockSize;
-  NativeUInt FOriginalBlockSize;
-public:
-  TFixedBlockHeap(NativeUInt ABlockSize, NativeUInt ABlockCount);  
-  Pointer Alloc();
-  NativeUInt GetOriginalBlockSize() { return FOriginalBlockSize; }
-};
+    struct TPageMetadata {
+      TPage* CurrentPagePtr;
+      NativeUInt NextOffset;
+    };
 
-class TVariableBlockHeap : TFastHeap {
-public:
-  TVariableBlockHeap(NativeUInt APoolSize);
-  Pointer Alloc(NativeUInt ASize);
-};
+    class TConcurrentFixedBlockHeap {
+    protected:
+      long FBlockCount;
+      NativeUInt FBlockSize;
+      NativeUInt FOriginalBlockSize;
+      std::atomic<TPageMetadata> CurrentPage;
+      NativeUInt FPageSize = 0;
+      NativeUInt FTotalUsableSize = 0;
+      void TryAllocNewBlockArray();
+    public:
+      TConcurrentFixedBlockHeap(NativeUInt ABlockSize, long ABlockCount);
+      ~TConcurrentFixedBlockHeap();
+      Pointer Alloc();
+      Integer GetCurrentBlockRefCount();
+      Boolean GetIsLockFree() { return CurrentPage.is_lock_free(); }
+      NativeUInt GetOriginalBlockSize() { return FOriginalBlockSize; }
+    };
 
-Boolean DeAlloc(Pointer Ptr);
-Pointer AllocBlockInPage(Pointer APage, NativeUInt AOffset);
+    Boolean ConcurrentDeAlloc(Pointer Ptr);
+
+  }
+}

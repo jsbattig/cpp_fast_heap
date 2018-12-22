@@ -24,39 +24,30 @@
   SOFTWARE.
 */
 
-#include <limits.h>
-#include "FastHeapTypes.h"
+#include "PasTypes.h"
 
-class TFastHeap {
-protected:
-  Pointer FStartBlockArray;
-  NativeUInt FNextOffset;
-  NativeUInt FPageSize;
-  NativeUInt FTotalUsableSize;
-  void AllocateMemory(void* &APtr, NativeUInt ASize);
-  void AllocNewBlockArray();
-  void DeallocateMemory(void* APtr);
-public:
-  virtual ~TFastHeap();
-  void DeAlloc(Pointer Ptr);
-  Integer GetCurrentBlockRefCount();
+const int _16KB = 16 * 1024;
+const int _32KB = 32 * 1024;
+const int _64KB = 64 * 1024;
+const int Aligner = sizeof(NativeUInt) - 1;
+
+typedef struct TPage* PPage;
+typedef struct TBlock* PBlock;
+
+struct TBlockHeader {
+  PPage PagePointer;
 };
 
-class TFixedBlockHeap : TFastHeap {
-protected:
-  NativeUInt FBlockSize;
-  NativeUInt FOriginalBlockSize;
-public:
-  TFixedBlockHeap(NativeUInt ABlockSize, NativeUInt ABlockCount);  
-  Pointer Alloc();
-  NativeUInt GetOriginalBlockSize() { return FOriginalBlockSize; }
+struct TBlock {
+  TBlockHeader Header;
+  Byte Data[INT_MAX - sizeof(TBlockHeader)];
 };
 
-class TVariableBlockHeap : TFastHeap {
-public:
-  TVariableBlockHeap(NativeUInt APoolSize);
-  Pointer Alloc(NativeUInt ASize);
+struct TPageHeader {
+  volatile long RefCount;
 };
 
-Boolean DeAlloc(Pointer Ptr);
-Pointer AllocBlockInPage(Pointer APage, NativeUInt AOffset);
+struct TPage {
+  TPageHeader Header;
+  TBlock FirstBlock;
+};
