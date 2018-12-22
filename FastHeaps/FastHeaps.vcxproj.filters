@@ -33,7 +33,10 @@
     <ClInclude Include="..\src\PasTypes.h">
       <Filter>Header Files\src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ConcurrentFastHeaps.h">
+    <ClInclude Include="..\src\ConcurrentFixedBlockHeap.h">
+      <Filter>Header Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\FastHeapTypes.h">
       <Filter>Header Files\src</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44,7 +47,7 @@
     <ClCompile Include="..\src\FastHeaps.cpp">
       <Filter>Source Files\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ConcurrentFastHeaps.cpp">
+    <ClCompile Include="..\src\ConcurrentFixedBlockHeap.cpp">
       <Filter>Source Files\src</Filter>
     </ClCompile>
   </ItemGroup>
