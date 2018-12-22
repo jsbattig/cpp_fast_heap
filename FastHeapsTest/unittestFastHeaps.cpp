@@ -10,9 +10,8 @@ namespace FastHeapsTest
 {
   void AllocDeallocIterationsFixedAllocator(TConcurrentFixedBlockHeap &heap, int iterations) {    
     void** ptrs = new void* [iterations];
-    for (int i = 0; i < iterations; i++) {
-      Pointer ptr = heap.Alloc();      
-      ptrs[i] = ptr;
+    for (int i = 0; i < iterations; i++) {      
+      ptrs[i] = heap.Alloc();
     }
     for (int i = 0; i < iterations; i++) {
       ConcurrentDeAlloc(ptrs[i]);
