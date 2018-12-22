@@ -39,18 +39,12 @@ namespace FastHeaps {
     }
 
     Boolean ConcurrentDeAlloc(Pointer Ptr) {
-      TBlock* block = (TBlock*)((NativeUInt)Ptr - sizeof(TBlockHeader));
-      TPageHeader* page = (TPageHeader*)block->Header.PagePointer;
-      if (_InterlockedDecrement(&page->RefCount) > 0)
+      PBlock block = (PBlock)((NativeUInt)Ptr - sizeof(TBlockHeader));
+      PPage page = block->Header.PagePointer;
+      if (_InterlockedDecrement(&page->Header.RefCount) > 0)
         return false;
       DeallocateMemory(page);
       return true;
-    }
-
-    Pointer ConcurentAllocBlockInPage(PPage APage, NativeUInt AOffset) {
-      PBlock Result = (PBlock)((NativeUInt)APage + AOffset);
-      Result->Header.PagePointer = APage;
-      return &Result->Data;
     }
 
     /* TConcurrentFixedBlockHeap */
@@ -61,55 +55,48 @@ namespace FastHeaps {
       FBlockSize = (ABlockSize + sizeof(TBlockHeader) + Aligner) & (~Aligner);
       FTotalUsableSize = FBlockSize * ABlockCount;
       FPageSize = FTotalUsableSize + sizeof(TPageHeader);
-      TPageMetadata page = { nullptr, FPageSize };
-      CurrentPage = page;
+      AllocNewPage();
     }
 
     TConcurrentFixedBlockHeap::~TConcurrentFixedBlockHeap() {
-      TPageMetadata page = CurrentPage;
-      if (page.CurrentPagePtr != nullptr && _InterlockedDecrement(&page.CurrentPagePtr->Header.RefCount) <= 0)
-        DeallocateMemory(page.CurrentPagePtr);
+      DeallocateMemory(CurrentPage);
     }
 
-    void TConcurrentFixedBlockHeap::TryAllocNewBlockArray() {
-      TPageMetadata page = CurrentPage;
-      if (page.CurrentPagePtr != nullptr && page.CurrentPagePtr->Header.RefCount == 1) {
-        /* This happens when we happen to be at the end of the page but the Heap itself is the
-           only object referencing the page. In that case we can simply reset the offset variable and RefCount */
-        TPageMetadata newPage = { page.CurrentPagePtr, sizeof(TPageHeader) };
-        page.CurrentPagePtr->Header.RefCount = FBlockCount + 1;
-        if (!CurrentPage.compare_exchange_weak(page, newPage))
-          DeallocateMemory(page.CurrentPagePtr);
-      }  else {
-        TPageMetadata newPage = { (PPage)AllocateMemory(FPageSize), sizeof(TPageHeader) };
-        newPage.CurrentPagePtr->Header.RefCount = FBlockCount + 1;
-        if (!CurrentPage.compare_exchange_weak(page, newPage)) {
-          DeallocateMemory(newPage.CurrentPagePtr);
-          return;
-        }
-        if (page.CurrentPagePtr != nullptr && _InterlockedDecrement(&page.CurrentPagePtr->Header.RefCount) == 0)
-          DeallocateMemory(page.CurrentPagePtr);
-      }
-    }
-
-    Integer TConcurrentFixedBlockHeap::GetCurrentBlockRefCount() {
-      TPageMetadata page = CurrentPage;
-      return page.CurrentPagePtr->Header.RefCount;
+    void TConcurrentFixedBlockHeap::AllocNewPage() {
+      PPage newPage = (PPage)AllocateMemory(FPageSize);
+      newPage->Header.RefCount = FBlockCount;
+      CurrentPage = newPage;
+      Offset_t offset = NextOffset;
+      offset.Serial++;
+      offset.Offset = sizeof(TPageHeader);
+      NextOffset = offset;
     }
 
     Pointer TConcurrentFixedBlockHeap::Alloc() {
-      TPageMetadata page;
+      long pageSize = FPageSize;
+      long blockSize = FBlockSize;
+      Offset_t nextOffset;
+      long nextOffsetOffset;
+      PPage curPage;
       do {
-        page = CurrentPage;
-        if (page.NextOffset >= FPageSize) {
-          TryAllocNewBlockArray();
+        nextOffset = NextOffset;
+        nextOffsetOffset = nextOffset.Offset;
+        if (nextOffsetOffset >= pageSize)
           continue;
-        }
-        TPageMetadata newPage = { page.CurrentPagePtr, page.NextOffset + FBlockSize };
-        if (CurrentPage.compare_exchange_weak(page, newPage))
+        curPage = CurrentPage;
+        Offset_t newNextOffset;
+        newNextOffset.Serial = nextOffset.Serial + 1;
+        long newNextOffsetOffset = nextOffsetOffset + blockSize;
+        newNextOffset.Offset = newNextOffsetOffset;
+        if (NextOffset.compare_exchange_weak(nextOffset, newNextOffset)) {
+          if (newNextOffsetOffset >= pageSize)
+            AllocNewPage();
           break;
+        }
       } while (true);
-      return ConcurentAllocBlockInPage(page.CurrentPagePtr, page.NextOffset);
+      PBlock Result = (PBlock)((NativeUInt)curPage + nextOffsetOffset);
+      Result->Header.PagePointer = curPage;
+      return &Result->Data;
     }
   }
 }

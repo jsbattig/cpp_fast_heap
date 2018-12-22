@@ -33,9 +33,9 @@
 namespace FastHeaps {
   namespace ConcurrentFastHeap {
 
-    struct TPageMetadata {
-      TPage* CurrentPagePtr;
-      long NextOffset;
+    struct Offset_t {
+      long Serial;
+      long Offset;
     };
 
     class TConcurrentFixedBlockHeap {
@@ -43,16 +43,16 @@ namespace FastHeaps {
       long FBlockCount;
       long FBlockSize;
       long FOriginalBlockSize;
-      std::atomic<TPageMetadata> CurrentPage;
+      PPage CurrentPage;
+      std::atomic<Offset_t> NextOffset;
       long FPageSize = 0;
       long FTotalUsableSize = 0;
-      void TryAllocNewBlockArray();
+      void AllocNewPage();
     public:
       TConcurrentFixedBlockHeap(long ABlockSize, long ABlockCount);
       ~TConcurrentFixedBlockHeap();
       Pointer Alloc();
-      Integer GetCurrentBlockRefCount();
-      Boolean GetIsLockFree() { return CurrentPage.is_lock_free(); }
+      Boolean GetIsLockFree() { return NextOffset.is_lock_free(); }
       NativeUInt GetOriginalBlockSize() { return FOriginalBlockSize; }
     };
 
