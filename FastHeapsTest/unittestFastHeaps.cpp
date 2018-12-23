@@ -2,6 +2,7 @@
 #include "CppUnitTest.h"
 #include "ConcurrentFixedBlockHeap.h"
 #include <thread>
+#include <atomic>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace FastHeaps::ConcurrentFastHeap;
@@ -10,7 +11,7 @@ namespace FastHeapsTest
 {
   void AllocDeallocIterationsFixedAllocator(TConcurrentFixedBlockHeap &heap, int iterations) {    
     void** ptrs = new void* [iterations];
-    for (int i = 0; i < iterations; i++) {      
+    for (int i = 0; i < iterations; i++) {
       ptrs[i] = heap.Alloc();
     }
     for (int i = 0; i < iterations; i++) {
@@ -22,7 +23,7 @@ namespace FastHeapsTest
   void AllocDeallocIterationsMalloc(int iterations) {
     void** ptrs = new void*[iterations];
     for (int i = 0; i < iterations; i++) {
-      Pointer ptr = malloc(64);      
+      Pointer ptr = malloc(64);
       ptrs[i] = ptr;
     }
     for (int i = 0; i < iterations; i++) {
@@ -45,8 +46,8 @@ namespace FastHeapsTest
 
     TEST_METHOD(TestIsLockFree)
     {
-      TConcurrentFixedBlockHeap heap(1024, 1024);      
-      Assert::IsTrue(heap.GetIsLockFree());      
+      TConcurrentFixedBlockHeap heap(1024, 1024);
+      Assert::IsTrue(heap.GetIsLockFree());
     }
 
     TEST_METHOD(TestAllocDeAllocForcingFreePage)
@@ -77,13 +78,13 @@ namespace FastHeapsTest
 
     TEST_METHOD(TestFixedBlockConcurrentHeapPerformanceThreaded)
     {
-      const int iterations = 500000;
+      const int iterations = 50000;
       TConcurrentFixedBlockHeap heap(64, 1024);
       std::thread* threads[10];
       for (int i = 0; i < 10; i++) {
         threads[i] = new std::thread(FastHeapsTest::AllocDeallocIterationsFixedAllocator, std::ref(heap), iterations);
       }  
-      for (int i = 0; i < 10; i++) {        
+      for (int i = 0; i < 10; i++) {
         threads[i]->join();
       }
       for (int i = 0; i < 10; i++) {
@@ -94,7 +95,7 @@ namespace FastHeapsTest
 
     TEST_METHOD(TestMallocPerformanceThreaded)
     {
-      const int iterations = 500000;
+      const int iterations = 50000;
       std::thread* threads[10];
       for (int i = 0; i < 10; i++) {
         threads[i] = new std::thread(FastHeapsTest::AllocDeallocIterationsMalloc, iterations);
@@ -106,6 +107,18 @@ namespace FastHeapsTest
         delete threads[i];
       }
       Assert::IsTrue(true);
+    }
+    
+    TEST_METHOD(TestInitAtomicIntInPlace)
+    {
+      struct T {
+        std::atomic<int> i;
+      };
+      void* p = malloc(sizeof(std::atomic<int>));
+      Assert::AreNotEqual(0, (int)(*(std::atomic<int>*)p));
+      (*(std::atomic<int>*)p) = 0;
+      Assert::AreEqual(sizeof(int), sizeof(std::atomic<int>));
+      Assert::AreEqual(0, (int)(*(std::atomic<int>*)p));
     }
 	};
 }

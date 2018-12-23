@@ -24,7 +24,6 @@
 
 #include "stdafx.h"
 #include "ConcurrentFixedBlockHeap.h"
-#include <stdlib.h>
 
 namespace FastHeaps {
   namespace ConcurrentFastHeap {
@@ -41,7 +40,7 @@ namespace FastHeaps {
     Boolean ConcurrentDeAlloc(Pointer Ptr) {
       PBlock block = (PBlock)((NativeUInt)Ptr - sizeof(TBlockHeader));
       PPage page = block->Header.PagePointer;
-      if (_InterlockedDecrement(&page->Header.RefCount) > 0)
+      if (page->Header.RefCount-- > 0)
         return false;
       DeallocateMemory(page);
       return true;

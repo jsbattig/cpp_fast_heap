@@ -27,7 +27,6 @@
 #include "PasTypes.h"
 #include <limits.h>
 #include "FastHeapTypes.h"
-#include <mutex>
 #include <atomic>
 
 namespace FastHeaps {
