@@ -5,7 +5,7 @@
 #include <atomic>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
-using namespace FastHeaps::ConcurrentFastHeap;
+using namespace FastHeaps::ConcurrentFixedBlockHeap;
 
 namespace FastHeapsTest
 {
@@ -15,7 +15,7 @@ namespace FastHeapsTest
       ptrs[i] = heap.Alloc();
     }
     for (int i = 0; i < iterations; i++) {
-      ConcurrentDeAlloc(ptrs[i]);
+      Free(ptrs[i]);
     }
     delete ptrs;
   }
@@ -41,7 +41,7 @@ namespace FastHeapsTest
       TConcurrentFixedBlockHeap heap(1024, 1024);
       Pointer ptr = heap.Alloc();
       Assert::AreNotEqual((NativeUInt)nullptr, (NativeUInt)ptr);
-      ConcurrentDeAlloc(ptr);
+      Free(ptr);
 		}
 
     TEST_METHOD(TestIsLockFree)
@@ -60,7 +60,7 @@ namespace FastHeapsTest
         ptrs[i] = ptr;
       }
       for (int i = 0; i < 15; i++) {
-        ConcurrentDeAlloc(ptrs[i]);
+        Free(ptrs[i]);
       }
     }
     
@@ -119,6 +119,17 @@ namespace FastHeapsTest
       (*(std::atomic<int>*)p) = 0;
       Assert::AreEqual(sizeof(int), sizeof(std::atomic<int>));
       Assert::AreEqual(0, (int)(*(std::atomic<int>*)p));
+    }
+
+    TEST_METHOD(TestAllocGlobalHeaps)
+    {
+      FastHeaps::ConcurrentFixedBlockHeap::InitGlobalAllocators(256);
+      for (int i = 1; i < 10000; i++) {
+        Pointer ptr = FastHeaps::ConcurrentFixedBlockHeap::Alloc(i);
+        Assert::AreNotEqual((NativeUInt)nullptr, (NativeUInt)ptr);
+        Free(ptr);
+      }
+      FastHeaps::ConcurrentFixedBlockHeap::DoneGlobalAllocators();
     }
 	};
 }

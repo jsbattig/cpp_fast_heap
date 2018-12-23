@@ -26,7 +26,7 @@
 #include "ConcurrentFixedBlockHeap.h"
 
 namespace FastHeaps {
-  namespace ConcurrentFastHeap {
+  namespace ConcurrentFixedBlockHeap {
     /* Globals */
 
     __inline Pointer AllocateMemory(NativeUInt ASize) {
@@ -37,16 +37,82 @@ namespace FastHeaps {
       free(APtr);
     }
 
-    Boolean ConcurrentDeAlloc(Pointer Ptr) {
+    static int AllocatorIndex[6144 + 1];
+    static TConcurrentFixedBlockHeap* heaps[18];
+    static Boolean inited = false;
+
+    void InitGlobalAllocators(int BlocksPerHeap) {
+      for (int i = 0; i < sizeof(AllocatorIndex); i++) {
+        if (i >= 0 && i <= 16) AllocatorIndex[i] = 0;
+        else if (i > 17 && i <= 24) AllocatorIndex[i] = 1;
+        else if (i > 24 && i <= 32) AllocatorIndex[i] = 2;
+        else if (i > 32 && i <= 48) AllocatorIndex[i] = 3;
+        else if (i > 48 && i <= 64) AllocatorIndex[i] = 4;
+        else if (i > 64 && i <= 96) AllocatorIndex[i] = 5;
+        else if (i > 96 && i <= 128) AllocatorIndex[i] = 6;
+        else if (i > 128 && i <= 192) AllocatorIndex[i] = 7;
+        else if (i > 192 && i <= 256) AllocatorIndex[i] = 8;
+        else if (i > 256 && i <= 384) AllocatorIndex[i] = 9;
+        else if (i > 384 && i <= 512) AllocatorIndex[i] = 10;
+        else if (i > 512 && i <= 768) AllocatorIndex[i] = 11;
+        else if (i > 768 && i <= 1024) AllocatorIndex[i] = 12;
+        else if (i > 1024 && i <= 1536) AllocatorIndex[i] = 13;
+        else if (i > 1536 && i <= 2048) AllocatorIndex[i] = 14;
+        else if (i > 2048 && i <= 3072) AllocatorIndex[i] = 15;
+        else if (i > 3072 && i <= 4096) AllocatorIndex[i] = 16;
+        else if (i > 4096 && i <= 6144) AllocatorIndex[i] = 17;
+      }
+      for (int i = 0; i <= 8; i++) {
+        heaps[i * 2] = new TConcurrentFixedBlockHeap(1 << (i + 3), BlocksPerHeap);
+        heaps[i * 2 + 1] = new TConcurrentFixedBlockHeap((1 << (i + 3)) + ((1 << (i + 3)) / 2), BlocksPerHeap);
+      }
+      inited = true;
+    }
+
+    void DoneGlobalAllocators() {
+      if (!inited)
+        return;
+      for (int i = 0; i <= 8; i++) {
+        delete heaps[i * 2];
+        delete heaps[i * 2 + 1];
+      }
+      inited = false;
+    }
+
+    Pointer Alloc(long size) {
+      if(size < sizeof(AllocatorIndex) / sizeof(int))
+        return heaps[AllocatorIndex[size]]->Alloc();
+      else
+      {
+        PBlock Result = (PBlock)AllocateMemory(size = sizeof(TBlockHeader));
+        Result->Header.PagePointer = nullptr;
+        return &Result->Data;
+      }
+    }
+
+    Boolean Free(Pointer Ptr) {
       PBlock block = (PBlock)((NativeUInt)Ptr - sizeof(TBlockHeader));
       PPage page = block->Header.PagePointer;
-      if (page->Header.RefCount-- > 0)
-        return false;
-      DeallocateMemory(page);
-      return true;
+      if (page != nullptr) {
+        if (page->Header.RefCount-- > 0)
+          return false;
+        DeallocateMemory(page);
+        return true;
+      } else {
+        DeallocateMemory(block);
+        return true;
+      }
     }
 
     /* TConcurrentFixedBlockHeap */
+
+    void* TConcurrentFixedBlockHeap::operator new(size_t size) {
+      return AllocateMemory(size);
+    }
+
+    void TConcurrentFixedBlockHeap::operator delete(void * p) {
+      DeallocateMemory(p);
+    }
 
     TConcurrentFixedBlockHeap::TConcurrentFixedBlockHeap(long ABlockSize, long ABlockCount) {
       FOriginalBlockSize = ABlockSize;

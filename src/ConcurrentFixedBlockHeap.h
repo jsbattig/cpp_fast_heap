@@ -30,7 +30,7 @@
 #include <atomic>
 
 namespace FastHeaps {
-  namespace ConcurrentFastHeap {
+  namespace ConcurrentFixedBlockHeap {
 
     struct Offset_t {
       long Serial;
@@ -53,8 +53,15 @@ namespace FastHeaps {
       Pointer Alloc();
       Boolean GetIsLockFree() { return NextOffset.is_lock_free(); }
       NativeUInt GetOriginalBlockSize() { return FOriginalBlockSize; }
+
+      void* operator new(size_t size);
+      void operator delete(void * p);
     };
 
-    Boolean ConcurrentDeAlloc(Pointer Ptr);
+    Boolean Free(Pointer Ptr);
+    Pointer Alloc(long size);
+
+    void InitGlobalAllocators(int BlocksPerHeap);
+    void DoneGlobalAllocators();
   }
 }
