@@ -20,6 +20,32 @@ namespace FastHeapsTest
     delete ptrs;
   }
 
+  void AllocDeallocIterationsUsingGlobalFixedAllocator(int iterations) {
+    void** ptrs = new void*[10];
+    for (int i = 0; i < iterations / 10; i++) {
+      for (int j = 0; j < 10; j++) {
+        ptrs[j] = Alloc(std::rand() % 4192);
+      }
+      for (int j = 0; j < 10; j++) {
+        Free(ptrs[j]);
+      }
+    }
+    delete ptrs;
+  }
+
+  void AllocDeallocIterationsUsingMalloc(int iterations) {
+    void** ptrs = new void*[10];
+    for (int i = 0; i < iterations / 10; i++) {
+      for (int j = 0; j < 10; j++) {
+        ptrs[j] = malloc(std::rand() % 4192);
+      }
+      for (int j = 0; j < 10; j++) {
+        free(ptrs[j]);
+      }
+    }
+    delete ptrs;
+  }
+
   void AllocDeallocIterationsMalloc(int iterations) {
     void** ptrs = new void*[iterations];
     for (int i = 0; i < iterations; i++) {
@@ -32,10 +58,17 @@ namespace FastHeapsTest
     delete ptrs;
   }
 
+  TEST_MODULE_INITIALIZE(FastHeapsTestsInit) {
+    FastHeaps::ConcurrentFixedBlockHeap::InitGlobalAllocators(1024);
+  }
+
+  TEST_MODULE_CLEANUP(FastHeapsTestsDone) {
+    FastHeaps::ConcurrentFixedBlockHeap::DoneGlobalAllocators();
+  }
+
 	TEST_CLASS(UnitTestFastHeaps)
 	{
-	public:
-		
+	public:		
 		TEST_METHOD(TestAllocDeAlloc)
 		{
       TConcurrentFixedBlockHeap heap(1024, 1024);
@@ -76,7 +109,7 @@ namespace FastHeapsTest
       AllocDeallocIterationsMalloc(iterations);      
     }
 
-    TEST_METHOD(TestFixedBlockConcurrentHeapPerformanceThreaded)
+    TEST_METHOD(TestFixedBlockHeapPerformanceThreaded)
     {
       const int iterations = 50000;
       TConcurrentFixedBlockHeap heap(64, 1024);
@@ -93,7 +126,39 @@ namespace FastHeapsTest
       Assert::IsTrue(true);
     }
 
-    TEST_METHOD(TestMallocPerformanceThreaded)
+    TEST_METHOD(TestFixedBlockRandomGlobalHeapPerformanceThreaded)
+    {
+      const int iterations = 50000;
+      std::thread* threads[10];
+      for (int i = 0; i < 10; i++) {
+        threads[i] = new std::thread(FastHeapsTest::AllocDeallocIterationsUsingGlobalFixedAllocator, iterations);
+      }
+      for (int i = 0; i < 10; i++) {
+        threads[i]->join();
+      }
+      for (int i = 0; i < 10; i++) {
+        delete threads[i];
+      }
+      Assert::IsTrue(true);
+    }
+
+    TEST_METHOD(TestMallocRandomPerformanceThreaded)
+    {
+      const int iterations = 50000;
+      std::thread* threads[10];
+      for (int i = 0; i < 10; i++) {
+        threads[i] = new std::thread(FastHeapsTest::AllocDeallocIterationsUsingMalloc, iterations);
+      }
+      for (int i = 0; i < 10; i++) {
+        threads[i]->join();
+      }
+      for (int i = 0; i < 10; i++) {
+        delete threads[i];
+      }
+      Assert::IsTrue(true);
+    }
+
+    TEST_METHOD(TestMallocFixedSizePerformanceThreaded)
     {
       const int iterations = 50000;
       std::thread* threads[10];
@@ -108,28 +173,14 @@ namespace FastHeapsTest
       }
       Assert::IsTrue(true);
     }
-    
-    TEST_METHOD(TestInitAtomicIntInPlace)
-    {
-      struct T {
-        std::atomic<int> i;
-      };
-      void* p = malloc(sizeof(std::atomic<int>));
-      Assert::AreNotEqual(0, (int)(*(std::atomic<int>*)p));
-      (*(std::atomic<int>*)p) = 0;
-      Assert::AreEqual(sizeof(int), sizeof(std::atomic<int>));
-      Assert::AreEqual(0, (int)(*(std::atomic<int>*)p));
-    }
 
     TEST_METHOD(TestAllocGlobalHeaps)
     {
-      FastHeaps::ConcurrentFixedBlockHeap::InitGlobalAllocators(256);
       for (int i = 1; i < 10000; i++) {
         Pointer ptr = FastHeaps::ConcurrentFixedBlockHeap::Alloc(i);
         Assert::AreNotEqual((NativeUInt)nullptr, (NativeUInt)ptr);
         Free(ptr);
       }
-      FastHeaps::ConcurrentFixedBlockHeap::DoneGlobalAllocators();
     }
 	};
 }

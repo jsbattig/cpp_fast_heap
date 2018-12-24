@@ -36,3 +36,5 @@
 /.vs/
 /FastHeaps/x64/
 /FastHeapsTest/x64/
+/FastHeaps/Release/
+/FastHeapsTest/Release/

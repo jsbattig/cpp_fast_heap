@@ -42,6 +42,8 @@ namespace FastHeaps {
     static Boolean inited = false;
 
     void InitGlobalAllocators(int BlocksPerHeap) {
+      if (inited)
+        return;
       for (int i = 0; i < sizeof(AllocatorIndex); i++) {
         if (i >= 0 && i <= 16) AllocatorIndex[i] = 0;
         else if (i > 17 && i <= 24) AllocatorIndex[i] = 1;
@@ -84,7 +86,7 @@ namespace FastHeaps {
         return heaps[AllocatorIndex[size]]->Alloc();
       else
       {
-        PBlock Result = (PBlock)AllocateMemory(size = sizeof(TBlockHeader));
+        PBlock Result = (PBlock)AllocateMemory(size + sizeof(TBlockHeader));
         Result->Header.PagePointer = nullptr;
         return &Result->Data;
       }
@@ -138,7 +140,6 @@ namespace FastHeaps {
     }
 
     Pointer TConcurrentFixedBlockHeap::Alloc() {
-      long pageSize = FPageSize;
       long blockSize = FBlockSize;
       Offset_t nextOffset;
       long nextOffsetOffset;
@@ -146,7 +147,7 @@ namespace FastHeaps {
       do {
         nextOffset = NextOffset;
         nextOffsetOffset = nextOffset.Offset;
-        if (nextOffsetOffset >= pageSize)
+        if (nextOffsetOffset >= FPageSize)
           continue;
         curPage = CurrentPage;
         Offset_t newNextOffset;
@@ -154,7 +155,7 @@ namespace FastHeaps {
         long newNextOffsetOffset = nextOffsetOffset + blockSize;
         newNextOffset.Offset = newNextOffsetOffset;
         if (NextOffset.compare_exchange_weak(nextOffset, newNextOffset)) {
-          if (newNextOffsetOffset >= pageSize)
+          if (newNextOffsetOffset >= FPageSize)
             AllocNewPage();
           break;
         }

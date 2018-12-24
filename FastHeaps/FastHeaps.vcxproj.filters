@@ -19,9 +19,6 @@
     <Filter Include="Source Files\src">
       <UniqueIdentifier>{a93beaa3-3ab0-4050-a750-e55212a117f0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Detours">
-      <UniqueIdentifier>{deb18de6-d54e-4250-a816-0859fd2162e2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Detours">
       <UniqueIdentifier>{ca86ea06-08c4-475d-8732-30a6eef1edc1}</UniqueIdentifier>
     </Filter>
@@ -61,36 +58,6 @@
     </ClCompile>
     <ClCompile Include="..\src\ConcurrentFixedBlockHeap.cpp">
       <Filter>Source Files\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Detours\src\creatwth.cpp">
-      <Filter>Source Files\Detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Detours\src\detours.cpp">
-      <Filter>Source Files\Detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Detours\src\disasm.cpp">
-      <Filter>Source Files\Detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Detours\src\disolarm.cpp">
-      <Filter>Source Files\Detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Detours\src\disolarm64.cpp">
-      <Filter>Source Files\Detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Detours\src\disolia64.cpp">
-      <Filter>Source Files\Detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Detours\src\disolx64.cpp">
-      <Filter>Source Files\Detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Detours\src\disolx86.cpp">
-      <Filter>Source Files\Detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Detours\src\image.cpp">
-      <Filter>Source Files\Detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Detours\src\modules.cpp">
-      <Filter>Source Files\Detours</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
