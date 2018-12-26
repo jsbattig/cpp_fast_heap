@@ -92,17 +92,17 @@ namespace FastHeaps {
       }
     }
 
-    Boolean Free(Pointer Ptr) {
+    void Free(Pointer Ptr) {
       PBlock block = (PBlock)((NativeUInt)Ptr - sizeof(TBlockHeader));
       PPage page = block->Header.PagePointer;
       if (page != nullptr) {
         if (page->Header.RefCount-- > 0)
-          return false;
+          return;
         DeallocateMemory(page);
-        return true;
+        return;
       } else {
         DeallocateMemory(block);
-        return true;
+        return;
       }
     }
 
@@ -140,27 +140,23 @@ namespace FastHeaps {
     }
 
     Pointer TConcurrentFixedBlockHeap::Alloc() {
-      long blockSize = FBlockSize;
       Offset_t nextOffset;
-      long nextOffsetOffset;
       PPage curPage;
       do {
         nextOffset = NextOffset;
-        nextOffsetOffset = nextOffset.Offset;
-        if (nextOffsetOffset >= FPageSize)
+        if (nextOffset.Offset >= FPageSize)
           continue;
         curPage = CurrentPage;
         Offset_t newNextOffset;
         newNextOffset.Serial = nextOffset.Serial + 1;
-        long newNextOffsetOffset = nextOffsetOffset + blockSize;
-        newNextOffset.Offset = newNextOffsetOffset;
+        newNextOffset.Offset = nextOffset.Offset + FBlockSize;
         if (NextOffset.compare_exchange_weak(nextOffset, newNextOffset)) {
-          if (newNextOffsetOffset >= FPageSize)
+          if (nextOffset.Offset + FBlockSize >= FPageSize)
             AllocNewPage();
           break;
         }
       } while (true);
-      PBlock Result = (PBlock)((NativeUInt)curPage + nextOffsetOffset);
+      PBlock Result = (PBlock)((NativeUInt)curPage + nextOffset.Offset);
       Result->Header.PagePointer = curPage;
       return &Result->Data;
     }

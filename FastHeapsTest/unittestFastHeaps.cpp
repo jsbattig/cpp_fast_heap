@@ -99,14 +99,14 @@ namespace FastHeapsTest
     
     TEST_METHOD(TestFixedBlockConcurrentHeapPerformance)
     {      
-      TConcurrentFixedBlockHeap heap(1024, 512);      
+      TConcurrentFixedBlockHeap heap(1024, 512);
       AllocDeallocIterationsFixedAllocator(heap, 25000);
     }
 
     TEST_METHOD(TestMallocFreePerformance)
     {      
       const int iterations = 25000;
-      AllocDeallocIterationsMalloc(iterations);      
+      AllocDeallocIterationsMalloc(iterations);
     }
 
     TEST_METHOD(TestFixedBlockHeapPerformanceThreaded)
@@ -128,7 +128,7 @@ namespace FastHeapsTest
 
     TEST_METHOD(TestFixedBlockRandomGlobalHeapPerformanceThreaded)
     {
-      const int iterations = 50000;
+      const int iterations = 100000;
       std::thread* threads[10];
       for (int i = 0; i < 10; i++) {
         threads[i] = new std::thread(FastHeapsTest::AllocDeallocIterationsUsingGlobalFixedAllocator, iterations);
@@ -144,7 +144,7 @@ namespace FastHeapsTest
 
     TEST_METHOD(TestMallocRandomPerformanceThreaded)
     {
-      const int iterations = 50000;
+      const int iterations = 100000;
       std::thread* threads[10];
       for (int i = 0; i < 10; i++) {
         threads[i] = new std::thread(FastHeapsTest::AllocDeallocIterationsUsingMalloc, iterations);

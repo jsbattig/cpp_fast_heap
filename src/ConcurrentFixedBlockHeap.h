@@ -58,7 +58,7 @@ namespace FastHeaps {
       void operator delete(void * p);
     };
 
-    Boolean Free(Pointer Ptr);
+    void Free(Pointer Ptr);
     Pointer Alloc(long size);
 
     void InitGlobalAllocators(int BlocksPerHeap);
