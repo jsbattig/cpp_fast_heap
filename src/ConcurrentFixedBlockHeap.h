@@ -27,7 +27,6 @@
 #include "PasTypes.h"
 #include <limits.h>
 #include "FastHeapTypes.h"
-#include <atomic>
 
 namespace FastHeaps {
   namespace ConcurrentFixedBlockHeap {
@@ -43,7 +42,7 @@ namespace FastHeaps {
       long FBlockSize;
       long FOriginalBlockSize;
       PPage CurrentPage;
-      std::atomic<Offset_t> NextOffset;
+      Offset_t NextOffset;
       long FPageSize = 0;
       long FTotalUsableSize = 0;
       void AllocNewPage();
@@ -51,7 +50,6 @@ namespace FastHeaps {
       TConcurrentFixedBlockHeap(long ABlockSize, long ABlockCount);
       ~TConcurrentFixedBlockHeap();
       Pointer Alloc();
-      Boolean GetIsLockFree() { return NextOffset.is_lock_free(); }
       NativeUInt GetOriginalBlockSize() { return FOriginalBlockSize; }
 
       void* operator new(size_t size);

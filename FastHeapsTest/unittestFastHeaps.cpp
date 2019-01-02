@@ -77,12 +77,6 @@ namespace FastHeapsTest
       Free(ptr);
 		}
 
-    TEST_METHOD(TestIsLockFree)
-    {
-      TConcurrentFixedBlockHeap heap(1024, 1024);
-      Assert::IsTrue(heap.GetIsLockFree());
-    }
-
     TEST_METHOD(TestAllocDeAllocForcingFreePage)
     {
       void* ptrs[15];

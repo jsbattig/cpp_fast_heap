@@ -25,7 +25,6 @@
 */
 
 #include "PasTypes.h"
-#include <atomic>
 
 const int _16KB = 16 * 1024;
 const int _32KB = 32 * 1024;
@@ -45,7 +44,7 @@ struct TBlock {
 };
 
 struct TPageHeader {
-  std::atomic<long> RefCount;
+  volatile long RefCount;
 };
 
 struct TPage {

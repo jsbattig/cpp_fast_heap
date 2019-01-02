@@ -24,6 +24,8 @@
 
 #include "stdafx.h"
 #include "ConcurrentFixedBlockHeap.h"
+#include <windows.h>
+#include <memory>
 
 namespace FastHeaps {
   namespace ConcurrentFixedBlockHeap {
@@ -96,14 +98,11 @@ namespace FastHeaps {
       PBlock block = (PBlock)((NativeUInt)Ptr - sizeof(TBlockHeader));
       PPage page = block->Header.PagePointer;
       if (page != nullptr) {
-        if (page->Header.RefCount-- > 0)
+        if (_InterlockedDecrement(&page->Header.RefCount) > 0)
           return;
         DeallocateMemory(page);
-        return;
-      } else {
+      } else
         DeallocateMemory(block);
-        return;
-      }
     }
 
     /* TConcurrentFixedBlockHeap */
@@ -150,11 +149,12 @@ namespace FastHeaps {
         Offset_t newNextOffset;
         newNextOffset.Serial = nextOffset.Serial + 1;
         newNextOffset.Offset = nextOffset.Offset + FBlockSize;
-        if (NextOffset.compare_exchange_weak(nextOffset, newNextOffset)) {
-          if (nextOffset.Offset + FBlockSize >= FPageSize)
+        NextOffset = newNextOffset;
+        //if (_InterlockedCompareExchange64(&(*(volatile Int64*)(&NextOffset)), *(Int64*)(&newNextOffset), *(Int64*)(&nextOffset)) == *(Int64*)(&nextOffset)) {
+          if (newNextOffset.Offset >= FPageSize)
             AllocNewPage();
           break;
-        }
+        //}
       } while (true);
       PBlock Result = (PBlock)((NativeUInt)curPage + nextOffset.Offset);
       Result->Header.PagePointer = curPage;
